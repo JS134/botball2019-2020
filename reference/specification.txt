@@ -1,4 +1,5 @@
 Variables
+double dt; a constant for all the functions that need it. Should be as small as possible
 double kP; proportion constant
 double kI; integral constant
 double kD; derivative constant
