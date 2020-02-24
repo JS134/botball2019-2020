@@ -14,7 +14,6 @@ unsigned char RIGHT_LINE_SENSOR; this is the port of the right line sensor
 
 
 
-
 Every function can only reference functions above them.
 void move_left(double speed); Moves the left motor at the specified speed
 void move_right(double speed); Moves the right motor at the specified speed
@@ -22,11 +21,17 @@ void move(double left_speed, double right_speed); Moves at the specified speeds
 void stop_moving_left(); Turns off the left wheel
 void stop_moving_right(); Turns off the right wheel
 void stop_moving(); Turns off the wheels
+void turn_angle(double power, double angle); Moves the robot the specified angle - try to not modify systems internal angle
 
 
 
 
 double PID_control(double error, double previous_error, double integral); Calculates the PID control value
+void move_distance(double left_speed, double right_speed, double distance); Moves the robot at the specified speeds until it travels the specified distance
 void go_to_line(double left_speed, double right_speed); Moves the robots at the specified speed until one of the sensors detects the line
 void align_line(); Aligns the robot to the line
 void follow_line(double speed, double time); Follows the line at the specified speed, for the specified amount of time
+
+
+
+TODO: servos
