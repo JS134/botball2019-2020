@@ -1,5 +1,4 @@
 Variables
-double dt; a constant for all the functions that need it. Should be as small as possible
 double kP; proportion constant
 double kI; integral constant
 double kD; derivative constant
@@ -26,8 +25,8 @@ void turn_angle(double power, double angle); Moves the robot the specified angle
 
 
 
-double PID_control(double error, double previous_error, double integral); Calculates the PID control value
-void move_distance(double left_speed, double right_speed, double distance); Moves the robot at the specified speeds until it travels the specified distance
+double PID_control(double error, double previous_error, double integral, double dt); Calculates the PID control value
+void move_distance(double speed, double distance); Moves the robot at the specified speeds until it travels the specified distance
 void go_to_line(double left_speed, double right_speed); Moves the robots at the specified speed until one of the sensors detects the line
 void align_line(); Aligns the robot to the line
 void follow_line(double speed, double time); Follows the line at the specified speed, for the specified amount of time
