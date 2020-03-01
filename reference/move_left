@@ -1,6 +1,6 @@
 void moveleft(double speed){
 #ifndef roomba
-motor_power(RIGHT_WHEEL, speed)
+motor_power(RIGHT_WHEEL, speed);
 #endif
   
 }
