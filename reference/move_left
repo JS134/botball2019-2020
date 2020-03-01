@@ -1,6 +1,8 @@
-void moveleft(double speed){
+void move_left(double speed){
 #ifndef roomba
-motor_power(RIGHT_WHEEL, speed);
+motor_power(LEFT_WHEEL, speed);
 #endif
-  
+#ifdef roomba
+create_drive_direct(speed,0);
+#endif
 }
