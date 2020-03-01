@@ -1,0 +1,4 @@
+void move(double left_speed, double right_speed){
+move_left(left_speed);
+move_right(right_speed);
+}
