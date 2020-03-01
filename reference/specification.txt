@@ -2,6 +2,9 @@ Variables
 double kP; proportion constant
 double kI; integral constant
 double kD; derivative constant
+double kR; range constant for go to line
+double black; black value estimate
+double white; white value estimate
 #define comp; this variable is defined when using competition mode
 #define roomba; this variable is defined when using the roomba
 unsigned char LEFT_WHEEL; when using the non-roomba, this is the port of the left wheel
