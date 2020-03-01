@@ -1,0 +1,15 @@
+void turn_angle(double power, double angle){
+#ifdef roomba
+double current_angle=get_create_total_angle();
+while(angle-get_create_total_angle()<5 || angle-get_create_total_angle()>-5){
+if(angle-get_create_total_angle()>0){
+move_left(power);
+msleep(50);
+stop_move_left();
+}
+if(angle-get_create_total_angle()<0){
+move_right(power);
+msleep(50);
+stop_move_right();
+}
+}
