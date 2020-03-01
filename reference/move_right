@@ -1,0 +1,7 @@
+
+void moveleft(double speed){
+#ifndef roomba
+motor_power(LEFT_WHEEL, speed);
+#endif
+  
+}
