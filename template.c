@@ -1,5 +1,87 @@
-void turn_angle(double power, double angle){
+#define PI 3.14159265359
+
+
+//PID CONSTANTS
+#define kP 1.0
+#define kI 0.0
+#define kD 0.0
+
+
+//RANGE CONSTANT FOR GO TO LINE
+#define kR 10.0
+
+
+//CONSTANT MODIFYING DISTANCES ON ROOMBA
+#define kMod 0.01
+
+
+//LINE SENSOR VALUES
+double blackValueL = 0.0;
+double blackValueR = 0.0;
+double whiteValueL = 0.0;
+double whiteValueR = 0.0;
+//#define comp
+//#define roomba
+
+
+//NON ROOMBA PORTS
+#define LEFT_WHEEL 0
+#define RIGHT_WHEEL 0
+
+
+//LIGHT SENSOR PORT NUMBER
+#define LIGHT_SENSOR 0
+
+
+//LEFT LINE SENSOR PORT NUMBER
+#define LEFT_LINE_SENSOR 0
+
+
+//RIGHT LINE SENSOR PORT NUMBER
+#define RIGHT_LINE_SENSOR 0
+
+void move_left(double speed) {
   #ifdef roomba
+    create_drive_direct(speed, 0);
+  #endif
+  #ifndef
+    motor(LEFT_WHEEL, speed);
+  #endif
+}
+
+void move_right(double speed) {
+  #ifdef roomba
+    create_drive_direct(0, speed);
+  #endif
+  #ifndef
+    motor(RIGHT_WHEEL, speed);
+  #endif
+}
+
+void move(double left_speed, double right_speed) {
+  #ifdef roomba
+    create_drive_direct(left_speed, right_speed);
+  #endif
+  #ifndef
+    move_left(left_speed);
+    move_right(right_speed);
+  #endif
+}
+
+void stop_moving_left() {
+  move_left(0.0);
+}
+
+void stop_moving_right() {
+  move_right(0.0);
+}
+
+void stop_moving() {
+  move(0.0, 0.0);
+}
+
+#ifdef roomba
+void turn_angle(double power, double angle) {
   double goal_angle = get_create_total_angle()+angle;
   double nPower = (angle > 0) ? power : -power;
   move(nPower, -nPower);
@@ -11,9 +93,8 @@ void turn_angle(double power, double angle){
     };
   };
   stop_move();
-  #endif
 }
-
+#endif
 
 double PID_control(double error, double previous_error, double integral, double dt) {
   double p = kP * error;
@@ -138,4 +219,25 @@ void follow_line(double speed, double dist) {
   };
   stop_moving();
   #endif
+};
+
+void code() {
+  //WRITE YOUR CODE HERE
+};
+
+int main() {
+  #ifdef roomba
+  create_connect();
+  #endif
+  enable_servos();
+  #ifdef comp
+  wait_for_light(LIGHT_SENSOR);
+  shut_down_in(119);
+  #endif
+  code();
+  disable_servos();
+  #ifdef roomba
+  create_disconnect();
+  #endif
+  return 0;
 };
