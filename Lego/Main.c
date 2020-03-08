@@ -221,6 +221,42 @@ void follow_line(double speed, double dist) {
 };
 
 void code() {
+
+int left_claw_port=;
+int right_claw_port=;
+int right_wheel_port=;
+int left_wheel_port=;
+int left_follower_port=;
+int right_follower_port=;
+int light_port=;
+
+//light sensor activation and timer added later
+
+set_servo_position(right_claw_port,POSITION);   //Open Claw
+
+go_to_line(double left_speed, double right_speed); //Go to Starting box bottom line
+
+move(LEFTSPEED,RIGHTSPEED); //Move Towards Material Transport
+
+set_servo_position(left_claw_port,POSITION); 
+set_servo_position(right_claw_port,POSITION); //Close Claw Around Material Transport
+
+turn_angle(power, angle); //Turn Left, releasing ramp, prepare to move forward
+
+//Somehow move forward (may use line followers, etc.);
+
+set_servo_position(left_claw_port,POSITION); 
+set_servo_position(right_claw_port,POSITION); //Release Material transport so it can catch water poms
+
+//From Material Transport, Back Up onto ramp. Implementation unclear. 
+
+turn_angle(POWER, ANGLE); //Turn right, lining up to knock off people and poms
+
+set_servo_position(left_claw_port,POSITION);
+set_servo_position(right_claw_port,POSITION); //Open up claws, preparing to knock off people and poms
+
+
+}
   //WRITE YOUR CODE HERE
 };
 
