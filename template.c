@@ -170,17 +170,17 @@ void go_to_line(double left_speed, double right_speed) {
 
 void follow_line(double speed, double dist) {
   #ifdef roomba
-  #define follow_line_condition ;get_create_distance() * kMod< dist;
+  #define follow_line_condition get_create_distance() * kMod< dist
   int initDist = get_create_distance();
   set_create_distance(0);
   #else
-  #define follow_line_condition ;t<=dist/speed;
+  #define follow_line_condition t<=dist/speed
   double t = 0.0;
   #endif
   clock_t cClock = clock();
   double pError = 0.0;
   double Integral = 0.0;
-  for(follow_line_condition) {
+  while(follow_line_condition) {
     double dt = ((double)(clock() - cClock)) / CLOCKS_PER_SEC;
     #ifndef roomba
     t += dt;
