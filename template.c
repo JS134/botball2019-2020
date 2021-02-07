@@ -40,6 +40,10 @@ double whiteValueR = 0.0;
 //RIGHT LINE SENSOR PORT NUMBER
 #define RIGHT_LINE_SENSOR 0
 
+double dabs(double x) {
+  return (x >= 0) ? x : -x;
+};
+
 void move_left(double speed) {
   #ifdef roomba
     create_drive_direct(speed, 0);
@@ -166,58 +170,47 @@ void go_to_line(double left_speed, double right_speed) {
 
 void follow_line(double speed, double dist) {
   #ifdef roomba
-  double pError = 0.0;
-  double Integral = 0.0;
-  clock_t cClock = clock();
+  #define follow_line_condition ;get_create_distance() * kMod< dist;
   int initDist = get_create_distance();
   set_create_distance(0);
-  for(;get_create_distance() * kMod< dist;) {
-    double dt = ((double)(clock() - cClock)) / CLOCKS_PER_SEC;
-    t += dt;
-    cClock = clock();
-    float lSense = analog(L_LINE_SENSOR);
-    float rSense = analog(R_LINE_SENSOR);
-    if(lSense > blackValueL) {
-      blackValueL = lSense;
-    };
-    if(rSense > blackValueR) {
-      blackValueR = rSense;
-    };
-    double error = (analog(L_LINE_SENSOR)-analog(R_LINE_SENSOR)-diff)/4095.0;
-    Integral += error*dt;
-    double control = PID_control(error,pError,Integral,dt);
-    pError = error;
-    move_at_power(Speed*(1.0-control),Speed*(1.0+control));
-    msleep(1000.0*dt);
-  };
-  stop_moving();
-  set_create_distance(initDist + get_create_distance());
+  #else
+  #define follow_line_condition ;t<=dist/speed;
+  double t = 0.0;
   #endif
-  #ifndef roomba
+  clock_t cClock = clock();
   double pError = 0.0;
   double Integral = 0.0;
-  double t = 0.0;
-  clock_t cClock = clock();
-  for(;t<=dist/Speed;) {
+  for(follow_line_condition) {
     double dt = ((double)(clock() - cClock)) / CLOCKS_PER_SEC;
+    #ifndef roomba
     t += dt;
+    #endif
     cClock = clock();
-    float lSense = analog(L_LINE_SENSOR);
-    float rSense = analog(R_LINE_SENSOR);
+    float lSense = analog(LEFT_LINE_SENSOR);
+    float rSense = analog(RIGHT_LINE_SENSOR);
     if(lSense > blackValueL) {
       blackValueL = lSense;
     };
     if(rSense > blackValueR) {
       blackValueR = rSense;
     };
-    double error = (analog(L_LINE_SENSOR)-analog(R_LINE_SENSOR)-diff)/4095.0;
+    if(lSense < whiteValueL) {
+      whiteValueL = lSense;
+    };
+    if(rSense < whiteValueR) {
+      whiteValueR = rSense;
+    };
+    double error = (lSense-whiteValueL)/(blackValueL-whiteValueL);
+    error -= (rSense-whiteValueR)/(blackValueL-whiteValueR);
     Integral += error*dt;
     double control = PID_control(error,pError,Integral,dt);
     pError = error;
-    move_at_power(Speed*(1.0-control),Speed*(1.0+control));
-    msleep(1000.0*dt);
+    move(speed*(1.0-control),speed*(1.0+control));
   };
   stop_moving();
+  #undef follow_line_condition
+  #ifdef roomba
+  set_create_distance(initDist + get_create_distance());
   #endif
 };
 
