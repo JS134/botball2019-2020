@@ -47,8 +47,7 @@ double dabs(double x) {
 void move_left(double speed) {
   #ifdef roomba
     create_drive_direct(speed, 0);
-  #endif
-  #ifndef
+  #else
     motor(LEFT_WHEEL, speed);
   #endif
 }
@@ -56,8 +55,7 @@ void move_left(double speed) {
 void move_right(double speed) {
   #ifdef roomba
     create_drive_direct(0, speed);
-  #endif
-  #ifndef
+  #else
     motor(RIGHT_WHEEL, speed);
   #endif
 }
@@ -65,8 +63,7 @@ void move_right(double speed) {
 void move(double left_speed, double right_speed) {
   #ifdef roomba
     create_drive_direct(left_speed, right_speed);
-  #endif
-  #ifndef
+  #else
     move_left(left_speed);
     move_right(right_speed);
   #endif
@@ -131,8 +128,7 @@ void move_distance(double left_speed, double right_speed, double distance) {
     move(left_speed*(1.0+control),right_speed*(1.0-control));
   };
   set_create_total_angle(get_create_total_angle() + oAngle); //reset angle
-  #endif
-  #ifndef roomba
+  #else
   move(left_speed, right_speed);
   double aSpeed = left_speed + right_speed;
   double time = distance / aSpeed;
@@ -142,30 +138,71 @@ void move_distance(double left_speed, double right_speed, double distance) {
 };
 
 void go_to_line(double left_speed, double right_speed) {
-  double mL = analog(L_LINE_SENSOR);
-  whiteValueL = mL;
-  double mR = analog(R_LINE_SENSOR);
-  whiteValueR = mR;
   move_at_power(lSpeed,rSpeed);
-  float t = dt;
-  stDevL = 0.0;
-  stDevR = 0.0;
+  float t = 0.0;
   clock_t cClock = clock();
-  while(t <= 0.1) {
+
+  //average calculation
+  double whiteValueLTemp = 0.0;
+  double whiteValueRTemp = 0.0;
+  #define go_to_line_whiteValueCalcTime 0.1
+  while(t <= go_to_line_whiteValueCalcTime) {
+    double dt = ((double)(clock() - cClock)) / CLOCKS_PER_SEC;
+    cClock = clock();
+    double mL = analog(L_LINE_SENSOR);
+    double mR = analog(R_LINE_SENSOR);
+    whiteValueLTemp += mL * dt;
+    whiteValueRTemp += mR * dt;
+    t += dt;
+  };
+  whiteValueL = whiteValueLTemp/t;
+  whiteValueR = whiteValueRTemp/t;
+
+  //standard deviation calculation
+  t = 0.0;
+  cClock = clock();
+  #define go_to_line_stDevCalcTime 0.1
+  while(t <= go_to_line_stDevCalcTime) {
     double dt = ((double)(clock() - cClock)) / CLOCKS_PER_SEC;
     cClock = clock();
     double sqNumL = (analog(L_LINE_SENSOR)-whiteValueL);
     double sqNumR = (analog(R_LINE_SENSOR)-whiteValueR);
-    stDevL = (stDevL*(t-dt)+dt*sqNumL*sqNumL)/t;
-    stDevR = (stDevR*(t-dt)+dt*sqNumR*sqNumR)/t;
+    stDevL = (stDevL*t+dt*sqNumL*sqNumL)/t;
+    stDevR = (stDevR*t+dt*sqNumR*sqNumR)/t;
     t += dt;
   };
-  stDevL = sqrt(stDevL);
-  stDevR = sqrt(stDevR);
-  while(dabs(analog(L_LINE_SENSOR)-mL)<=kR*stDevL&&dabs(analog(R_LINE_SENSOR)-mR)<=kR*stDevR) {
+
+  //go to line
+  t = 0.0;
+  float integralError = 0.0;//this should be the integral of error dt
+  cClock = clock();
+  while(dabs(integralError) <= kR*stDev) {
+    double dt = ((double)(clock() - cClock)) / CLOCKS_PER_SEC;
+    cClock = clock();
+    double valL = analog(L_LINE_SENSOR);
+    double valR = analog(R_LINE_SENSOR);
+    t += dt;
+    integralError += (valL + valR - whiteValueL - whiteValueR)*dt;
   };
-  blackValueL = analog(L_LINE_SENSOR);
-  blackValueR = analog(R_LINE_SENSOR);
+
+  //average black value calculation
+  double blackValueLTemp = 0.0;
+  double blackValueRTemp = 0.0;
+  t = 0.0;
+  cClock = clock();
+  #define go_to_line_blackValueCalcTime 0.1
+  while(t <= go_to_line_blackValueCalcTime) {
+    double dt = ((double)(clock() - cClock)) / CLOCKS_PER_SEC;
+    cClock = clock();
+    double mL = analog(L_LINE_SENSOR);
+    double mR = analog(R_LINE_SENSOR);
+    blackValueLTemp += mL * dt;
+    blackValueRTemp += mR * dt;
+    t += dt;
+  };
+  stop_moving();
+  blackValueL = blackValueLTemp/t;
+  blackValueR = blackValueRTemp/t;
 };
 
 void follow_line(double speed, double dist) {
@@ -182,10 +219,10 @@ void follow_line(double speed, double dist) {
   double Integral = 0.0;
   while(follow_line_condition) {
     double dt = ((double)(clock() - cClock)) / CLOCKS_PER_SEC;
+    cClock = clock();
     #ifndef roomba
     t += dt;
     #endif
-    cClock = clock();
     float lSense = analog(LEFT_LINE_SENSOR);
     float rSense = analog(RIGHT_LINE_SENSOR);
     if(lSense > blackValueL) {
