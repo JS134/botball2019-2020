@@ -159,6 +159,9 @@ void go_to_line(double left_speed, double right_speed) {
   whiteValueR = whiteValueRTemp/t;
 
   //standard deviation calculation
+  double stDevLTemp = 0.0;
+  double stDevRTemp = 0.0;
+  double stDev = 0.0;
   t = 0.0;
   cClock = clock();
   #define go_to_line_stDevCalcTime 0.1
@@ -167,10 +170,15 @@ void go_to_line(double left_speed, double right_speed) {
     cClock = clock();
     double sqNumL = (analog(L_LINE_SENSOR)-whiteValueL);
     double sqNumR = (analog(R_LINE_SENSOR)-whiteValueR);
-    stDevL = (stDevL*t+dt*sqNumL*sqNumL)/t;
-    stDevR = (stDevR*t+dt*sqNumR*sqNumR)/t;
+    double sqNum = sqNumL+sqNumR;
+    stDevL += dt*sqNumL*sqNumL;
+    stDevR += dt*sqNumR*sqNumR;
+    stDev += dt*sqNum*sqNum;
     t += dt;
   };
+  stDevL = stDevLTemp/t;
+  stDevR = stDevRTemp/t;
+  stDev /= t;
 
   //go to line
   t = 0.0;
