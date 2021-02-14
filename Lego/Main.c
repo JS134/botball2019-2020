@@ -1,14 +1,18 @@
+#include <kipr/wombat.h>
+#include <math.h>
+#include <time.h>
+
 #define PI 3.14159265359
 
 
 //PID CONSTANTS
-#define kP 1.0
-#define kI 0.0
-#define kD 0.0
+#define kP 4.7
+#define kI 0.11
+#define kD 0.000015548
 
 
 //RANGE CONSTANT FOR GO TO LINE
-#define kR 10.0
+#define kR 0.005
 
 
 //CONSTANT MODIFYING DISTANCES ON ROOMBA
@@ -21,6 +25,7 @@ double blackValueR = 0.0;
 double whiteValueL = 0.0;
 double whiteValueR = 0.0;
 //#define comp
+//#define roomba
 
 
 //NON ROOMBA PORTS
@@ -39,11 +44,14 @@ double whiteValueR = 0.0;
 //RIGHT LINE SENSOR PORT NUMBER
 #define RIGHT_LINE_SENSOR 0
 
+double dabs(double x) {
+  return (x >= 0) ? x : -x;
+};
+
 void move_left(double speed) {
   #ifdef roomba
     create_drive_direct(speed, 0);
-  #endif
-  #ifndef
+  #else
     motor(LEFT_WHEEL, speed);
   #endif
 }
@@ -51,8 +59,7 @@ void move_left(double speed) {
 void move_right(double speed) {
   #ifdef roomba
     create_drive_direct(0, speed);
-  #endif
-  #ifndef
+  #else
     motor(RIGHT_WHEEL, speed);
   #endif
 }
@@ -60,8 +67,7 @@ void move_right(double speed) {
 void move(double left_speed, double right_speed) {
   #ifdef roomba
     create_drive_direct(left_speed, right_speed);
-  #endif
-  #ifndef
+  #else
     move_left(left_speed);
     move_right(right_speed);
   #endif
@@ -91,7 +97,7 @@ void turn_angle(double power, double angle) {
     while(goal_angle < get_create_total_angle()) {
     };
   };
-  stop_move();
+  stop_moving();
 }
 #endif
 
@@ -126,8 +132,7 @@ void move_distance(double left_speed, double right_speed, double distance) {
     move(left_speed*(1.0+control),right_speed*(1.0-control));
   };
   set_create_total_angle(get_create_total_angle() + oAngle); //reset angle
-  #endif
-  #ifndef roomba
+  #else
   move(left_speed, right_speed);
   double aSpeed = left_speed + right_speed;
   double time = distance / aSpeed;
@@ -137,126 +142,114 @@ void move_distance(double left_speed, double right_speed, double distance) {
 };
 
 void go_to_line(double left_speed, double right_speed) {
-  double mL = analog(L_LINE_SENSOR);
-  whiteValueL = mL;
-  double mR = analog(R_LINE_SENSOR);
-  whiteValueR = mR;
-  move_at_power(lSpeed,rSpeed);
-  float t = dt;
-  stDevL = 0.0;
-  stDevR = 0.0;
+  move(left_speed,right_speed);
+  float t = 0.0;
   clock_t cClock = clock();
-  while(t <= 0.1) {
+
+  //average calculation
+  double whiteValueLTemp = 0.0;
+  double whiteValueRTemp = 0.0;
+  #define go_to_line_whiteValueCalcTime 0.04
+  while(t <= go_to_line_whiteValueCalcTime) {
     double dt = ((double)(clock() - cClock)) / CLOCKS_PER_SEC;
     cClock = clock();
-    double sqNumL = (analog(L_LINE_SENSOR)-whiteValueL);
-    double sqNumR = (analog(R_LINE_SENSOR)-whiteValueR);
-    stDevL = (stDevL*(t-dt)+dt*sqNumL*sqNumL)/t;
-    stDevR = (stDevR*(t-dt)+dt*sqNumR*sqNumR)/t;
+    double mL = analog(LEFT_LINE_SENSOR);
+    double mR = analog(RIGHT_LINE_SENSOR);
+    whiteValueLTemp += mL * dt;
+    whiteValueRTemp += mR * dt;
     t += dt;
   };
-  stDevL = sqrt(stDevL);
-  stDevR = sqrt(stDevR);
-  while(dabs(analog(L_LINE_SENSOR)-mL)<=kR*stDevL&&dabs(analog(R_LINE_SENSOR)-mR)<=kR*stDevR) {
+  whiteValueL = whiteValueLTemp/t;
+  whiteValueR = whiteValueRTemp/t;
+
+  //standard deviation calculation
+  double stDevL = 0.0;
+  double stDevR = 0.0;
+  double stDev = 0.0;
+  t = 0.0;
+  cClock = clock();
+  #define go_to_line_stDevCalcTime 0.04
+  while(t <= go_to_line_stDevCalcTime) {
+    double dt = ((double)(clock() - cClock)) / CLOCKS_PER_SEC;
+    cClock = clock();
+    double sqNumL = (analog(LEFT_LINE_SENSOR)-whiteValueL);
+    double sqNumR = (analog(RIGHT_LINE_SENSOR)-whiteValueR);
+    double sqNum = sqNumL+sqNumR;
+    stDevL += dt*sqNumL*sqNumL;
+    stDevR += dt*sqNumR*sqNumR;
+    stDev += dt*sqNum*sqNum;
+    t += dt;
   };
-  blackValueL = analog(L_LINE_SENSOR);
-  blackValueR = analog(R_LINE_SENSOR);
+  stDevL /= t;
+  stDevR /= t;
+  stDev /= t;
+
+  //go to line
+  t = 0.0;
+  float integralError = 0.0;//this should be the integral of error dt
+  cClock = clock();
+  while(dabs(integralError) <= kR*stDev) {
+    double dt = ((double)(clock() - cClock)) / CLOCKS_PER_SEC;
+    cClock = clock();
+    double valL = analog(LEFT_LINE_SENSOR);
+    double valR = analog(RIGHT_LINE_SENSOR);
+    t += dt;
+    integralError += (valL + valR - whiteValueL - whiteValueR)*dt;
+    integralError *= exp(-dt);
+  };
+
+  //black value calculation
+  blackValueL = analog(LEFT_LINE_SENSOR);
+  blackValueR = analog(RIGHT_LINE_SENSOR);
 };
 
 void follow_line(double speed, double dist) {
   #ifdef roomba
-  double pError = 0.0;
-  double Integral = 0.0;
-  clock_t cClock = clock();
+  #define follow_line_condition get_create_distance() * kMod< dist
   int initDist = get_create_distance();
   set_create_distance(0);
-  for(;get_create_distance() * kMod< dist;) {
-    double dt = ((double)(clock() - cClock)) / CLOCKS_PER_SEC;
-    t += dt;
-    cClock = clock();
-    float lSense = analog(L_LINE_SENSOR);
-    float rSense = analog(R_LINE_SENSOR);
-    if(lSense > blackValueL) {
-      blackValueL = lSense;
-    };
-    if(rSense > blackValueR) {
-      blackValueR = rSense;
-    };
-    double error = (analog(L_LINE_SENSOR)-analog(R_LINE_SENSOR)-diff)/4095.0;
-    Integral += error*dt;
-    double control = PID_control(error,pError,Integral,dt);
-    pError = error;
-    move_at_power(Speed*(1.0-control),Speed*(1.0+control));
-    msleep(1000.0*dt);
-  };
-  stop_moving();
-  set_create_distance(initDist + get_create_distance());
+  #else
+  #define follow_line_condition t<=dist/speed
+  double t = 0.0;
   #endif
-  #ifndef roomba
+  clock_t cClock = clock();
   double pError = 0.0;
   double Integral = 0.0;
-  double t = 0.0;
-  clock_t cClock = clock();
-  for(;t<=dist/Speed;) {
+  while(follow_line_condition) {
     double dt = ((double)(clock() - cClock)) / CLOCKS_PER_SEC;
-    t += dt;
     cClock = clock();
-    float lSense = analog(L_LINE_SENSOR);
-    float rSense = analog(R_LINE_SENSOR);
+    #ifndef roomba
+    t += dt;
+    #endif
+    float lSense = analog(LEFT_LINE_SENSOR);
+    float rSense = analog(RIGHT_LINE_SENSOR);
     if(lSense > blackValueL) {
       blackValueL = lSense;
     };
     if(rSense > blackValueR) {
       blackValueR = rSense;
     };
-    double error = (analog(L_LINE_SENSOR)-analog(R_LINE_SENSOR)-diff)/4095.0;
+    if(lSense < whiteValueL) {
+      whiteValueL = lSense;
+    };
+    if(rSense < whiteValueR) {
+      whiteValueR = rSense;
+    };
+    double error = (lSense-whiteValueL)/(blackValueL-whiteValueL);
+    error -= (rSense-whiteValueR)/(blackValueL-whiteValueR);
     Integral += error*dt;
     double control = PID_control(error,pError,Integral,dt);
     pError = error;
-    move_at_power(Speed*(1.0-control),Speed*(1.0+control));
-    msleep(1000.0*dt);
+    move(speed*(1.0-control),speed*(1.0+control));
   };
   stop_moving();
+  #undef follow_line_condition
+  #ifdef roomba
+  set_create_distance(initDist + get_create_distance());
   #endif
 };
 
 void code() {
-
-int left_claw_port=;
-int right_claw_port=;
-int right_wheel_port=;
-int left_wheel_port=;
-int left_follower_port=;
-int right_follower_port=;
-int light_port=;
-
-//light sensor activation and timer added later
-
-set_servo_position(right_claw_port,POSITION);   //Open Claw
-
-go_to_line(double left_speed, double right_speed); //Go to Starting box bottom line
-
-move(LEFTSPEED,RIGHTSPEED); //Move Towards Material Transport
-
-set_servo_position(left_claw_port,POSITION); 
-set_servo_position(right_claw_port,POSITION); //Close Claw Around Material Transport
-
-turn_angle(power, angle); //Turn Left, releasing ramp, prepare to move forward
-
-//Somehow move forward (may use line followers, etc.);
-
-set_servo_position(left_claw_port,POSITION); 
-set_servo_position(right_claw_port,POSITION); //Release Material transport so it can catch water poms
-
-//From Material Transport, Back Up onto ramp. Implementation unclear. 
-
-turn_angle(POWER, ANGLE); //Turn right, lining up to knock off people and poms
-
-set_servo_position(left_claw_port,POSITION);
-set_servo_position(right_claw_port,POSITION); //Open up claws, preparing to knock off people and poms
-
-
-}
   //WRITE YOUR CODE HERE
 };
 
