@@ -1,3 +1,5 @@
+#include <math.h>
+
 #define PI 3.14159265359
 
 
@@ -8,7 +10,7 @@
 
 
 //RANGE CONSTANT FOR GO TO LINE
-#define kR 10.0
+#define kR 0.01
 
 
 //CONSTANT MODIFYING DISTANCES ON ROOMBA
@@ -138,19 +140,19 @@ void move_distance(double left_speed, double right_speed, double distance) {
 };
 
 void go_to_line(double left_speed, double right_speed) {
-  move_at_power(lSpeed,rSpeed);
+  move(left_speed,right_speed);
   float t = 0.0;
   clock_t cClock = clock();
 
   //average calculation
   double whiteValueLTemp = 0.0;
   double whiteValueRTemp = 0.0;
-  #define go_to_line_whiteValueCalcTime 0.1
+  #define go_to_line_whiteValueCalcTime 0.04
   while(t <= go_to_line_whiteValueCalcTime) {
     double dt = ((double)(clock() - cClock)) / CLOCKS_PER_SEC;
     cClock = clock();
-    double mL = analog(L_LINE_SENSOR);
-    double mR = analog(R_LINE_SENSOR);
+    double mL = analog(LEFT_LINE_SENSOR);
+    double mR = analog(RIGHT_LINE_SENSOR);
     whiteValueLTemp += mL * dt;
     whiteValueRTemp += mR * dt;
     t += dt;
@@ -159,25 +161,25 @@ void go_to_line(double left_speed, double right_speed) {
   whiteValueR = whiteValueRTemp/t;
 
   //standard deviation calculation
-  double stDevLTemp = 0.0;
-  double stDevRTemp = 0.0;
+  double stDevL = 0.0;
+  double stDevR = 0.0;
   double stDev = 0.0;
   t = 0.0;
   cClock = clock();
-  #define go_to_line_stDevCalcTime 0.1
+  #define go_to_line_stDevCalcTime 0.04
   while(t <= go_to_line_stDevCalcTime) {
     double dt = ((double)(clock() - cClock)) / CLOCKS_PER_SEC;
     cClock = clock();
-    double sqNumL = (analog(L_LINE_SENSOR)-whiteValueL);
-    double sqNumR = (analog(R_LINE_SENSOR)-whiteValueR);
+    double sqNumL = (analog(LEFT_LINE_SENSOR)-whiteValueL);
+    double sqNumR = (analog(RIGHT_LINE_SENSOR)-whiteValueR);
     double sqNum = sqNumL+sqNumR;
     stDevL += dt*sqNumL*sqNumL;
     stDevR += dt*sqNumR*sqNumR;
     stDev += dt*sqNum*sqNum;
     t += dt;
   };
-  stDevL = stDevLTemp/t;
-  stDevR = stDevRTemp/t;
+  stDevL /= t;
+  stDevR /= t;
   stDev /= t;
 
   //go to line
@@ -187,30 +189,16 @@ void go_to_line(double left_speed, double right_speed) {
   while(dabs(integralError) <= kR*stDev) {
     double dt = ((double)(clock() - cClock)) / CLOCKS_PER_SEC;
     cClock = clock();
-    double valL = analog(L_LINE_SENSOR);
-    double valR = analog(R_LINE_SENSOR);
+    double valL = analog(LEFT_LINE_SENSOR);
+    double valR = analog(RIGHT_LINE_SENSOR);
     t += dt;
     integralError += (valL + valR - whiteValueL - whiteValueR)*dt;
+    integralError *= exp(-dt);
   };
 
-  //average black value calculation
-  double blackValueLTemp = 0.0;
-  double blackValueRTemp = 0.0;
-  t = 0.0;
-  cClock = clock();
-  #define go_to_line_blackValueCalcTime 0.1
-  while(t <= go_to_line_blackValueCalcTime) {
-    double dt = ((double)(clock() - cClock)) / CLOCKS_PER_SEC;
-    cClock = clock();
-    double mL = analog(L_LINE_SENSOR);
-    double mR = analog(R_LINE_SENSOR);
-    blackValueLTemp += mL * dt;
-    blackValueRTemp += mR * dt;
-    t += dt;
-  };
-  stop_moving();
-  blackValueL = blackValueLTemp/t;
-  blackValueR = blackValueRTemp/t;
+  //black value calculation
+  blackValueL = analog(LEFT_LINE_SENSOR);
+  blackValueR = analog(RIGHT_LINE_SENSOR);
 };
 
 void follow_line(double speed, double dist) {
