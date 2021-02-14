@@ -1,4 +1,6 @@
+#include <kipr/wombat.h>
 #include <math.h>
+#include <time.h>
 
 #define PI 3.14159265359
 
@@ -95,7 +97,7 @@ void turn_angle(double power, double angle) {
     while(goal_angle < get_create_total_angle()) {
     };
   };
-  stop_move();
+  stop_moving();
 }
 #endif
 
