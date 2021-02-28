@@ -6,7 +6,7 @@
 
 
 //PID CONSTANTS
-#define kP 4.7
+#define kP 4.1
 #define kI 0.11
 #define kD 0.000015548
 
@@ -194,8 +194,8 @@ void go_to_line(double left_speed, double right_speed) {
     double valL = analog(LEFT_LINE_SENSOR);
     double valR = analog(RIGHT_LINE_SENSOR);
     t += dt;
-    integralError += (valL + valR - whiteValueL - whiteValueR)*dt;
-    integralError *= exp(-dt);
+    integralError += (valL + valR - whiteValueL - whiteValueR)*dt*Speed;
+    integralError *= exp(-dt*Speed);
   };
 
   //black value calculation

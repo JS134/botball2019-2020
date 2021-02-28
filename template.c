@@ -118,7 +118,7 @@ void move_distance(double left_speed, double right_speed, double distance) {
   int pRoombaDist = get_create_distance();
   double integral = 0;
   while(cDist < distance) {
-    double angle = get_create_total_angle() * pi / 180;
+    double angle = get_create_total_angle() * PI / 180;
     double changeDistance = get_create_distance() - pRoombaDist;
     changeDistance *= kMod;
     pRoombaDist = get_create_distance();
@@ -194,8 +194,8 @@ void go_to_line(double left_speed, double right_speed) {
     double valL = analog(LEFT_LINE_SENSOR);
     double valR = analog(RIGHT_LINE_SENSOR);
     t += dt;
-    integralError += (valL + valR - whiteValueL - whiteValueR)*dt;
-    integralError *= exp(-dt);
+    integralError += (valL + valR - whiteValueL - whiteValueR)*dt*Speed;
+    integralError *= exp(-dt*Speed);
   };
 
   //black value calculation
