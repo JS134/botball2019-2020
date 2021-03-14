@@ -12,7 +12,7 @@
 
 
 //RANGE CONSTANT FOR GO TO LINE
-#define kR 0.29
+#define kR 0.3
 
 
 //CONSTANT MODIFYING DISTANCES ON ROOMBA
@@ -286,28 +286,54 @@ void follow_line(double speed, double dist) {
 void code() {
     //WRITE YOUR CODE HERE
     set_servo_position(LEFT_CLAW, LEFT_CLAW_OPEN);
-    set_servo_position(RIGHT_CLAW, RIGHT_CLAW_OPEN);
-    msleep(1000);
-    go_to_line(100,100);
+    set_servo_position(RIGHT_CLAW, RIGHT_CLAW_OPEN);//opens claws to later grab pvc ring
+    msleep(1000);//gives motors time to open
+    
+    go_to_line(50,50);//goes to black line to calibrate y axis
+    move_distance(-50,-50,80);//moves backwards
+    move_distance(50,0,145);//turns to face towards pvc ring
+    move_distance(-50,-50,100);//moves backwards as a saftey net
+    
+    go_to_line(80,80);//goes to black line to calibrate position towards pvc ring
     printf("go_to_line 1 finished.\n");
-    move_distance(100,100,190);
+    move_distance(100,100,190);//moves to pvc ring
+    set_servo_position(LEFT_CLAW, LEFT_CLAW_CLOSE);
+    set_servo_position(RIGHT_CLAW, RIGHT_CLAW_CLOSE);//closes claws to grab pvc ring
+    msleep(1000);//gives motors time to close
+    move_distance(-50,-50,100);
+    go_to_line(-50,-50);//goes back to line to calibrate position backwards
+    printf("go_to_line 2 finished.\n");
+    move_distance(-100,-100,100);//goes backwards to turning location
+    
+    //move_distance code:
+    move_distance(-100,0,120);
+    msleep(500);
+    move_distance(100,100,300);
+    move_distance(0,100,100);
+    msleep(500);
+    move_distance(100,100,100);
+    msleep(500);
+    set_servo_position(LEFT_CLAW, LEFT_CLAW_OPEN);
+    set_servo_position(RIGHT_CLAW, RIGHT_CLAW_OPEN);
+    msleep(500);
+    move_distance(-100,-100,120);
+    msleep(500);
     set_servo_position(LEFT_CLAW, LEFT_CLAW_CLOSE);
     set_servo_position(RIGHT_CLAW, RIGHT_CLAW_CLOSE);
-    msleep(1000);
-    go_to_line(-50,-50);
-    move_distance(-100,-100,100);
-    move_left(-100);
-    msleep(1200);
-    stop_moving_left();
-    printf("Part 1 finished.\n");
-    move_distance(100,100, 300);
-    go_to_line(30,30);
-    printf("go to line 2 finished \n");
-    //move_distance(50,57,50);
-    //go_to_line(20,22);
-    //printf("Go to line 3 finished \n");
-    //move_distance(20,20,80);
-    //follow_line(60,100);
+    msleep(500);
+    
+    
+    //line follower code:
+    //move_left(-100);//turns to face new black line in order to follow it
+    //msleep(1200);
+    //stop_moving_left();
+    //printf("Part 1 finished.\n");
+    //move_distance(100,100,270);//moves past line in front of desired line
+    //go_to_line(30,30);//moves towards desired line in order to follow it
+    //printf("go to line 3 finished \n");
+    //move_distance(20,20,70);
+    //follow_line(60,10);
+    
 };
 
 int main() {
