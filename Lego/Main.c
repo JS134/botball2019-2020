@@ -290,7 +290,7 @@ void follow_line(double speed, double dist) {
   #endif
 };
 
-
+#define temp_func stop_moving();msleep(0);
 void code() {
     //WRITE YOUR CODE HERE
     set_servo_position(LEFT_CLAW, LEFT_CLAW_OPEN);
@@ -298,48 +298,103 @@ void code() {
     msleep(1000);//gives motors time to open
     
     go_to_line(50,50);//goes to black line to calibrate y axis
+    temp_func//temp
     move_distance(-50,-50,1300);//moves backwards
+    temp_func//temp
     move_distance(50,0,2150);//turns to face towards pvc ring
+    temp_func//temp
     move_distance(-50,-50,900);//moves backwards as a saftey net
+   temp_func//temp
     go_to_line(80,80);//goes to black line to calibrate position towards pvc ring
+    temp_func//temp
     printf("go_to_line 1 finished.\n");
     move_distance(100,100,3100);//moves to pvc ring
     set_servo_position(LEFT_CLAW, LEFT_CLAW_CLOSE);
     set_servo_position(RIGHT_CLAW, RIGHT_CLAW_CLOSE);//closes claws to grab pvc ring
     msleep(1000);//gives motors time to close
+    temp_func//temp
     move_distance(-50,-50,1700);
+    temp_func//temp
     go_to_line(-50,-50);//goes back to line to calibrate position backwards
+    temp_func//temp
     printf("go_to_line 2 finished.\n");
     move_distance(-100,-100,1500);//goes backwards to turning location
+    temp_func//temp
     
     //move_distance code:
     move_distance(-100,0,1700);//turns to avoid blocks
     msleep(500);
+    temp_func//temp
     move_distance(100,100,5000);//moves
-    move_distance(0,80,1600);//turns around blocks
+    temp_func//temp
+    move_distance(0,80,1700);//turns around blocks
     msleep(500);
-    move_distance(100,100,1700);//moves to placement location
+    temp_func//temp
+    move_distance(100,100,1600);//moves to placement location
     msleep(500);
+    move_distance(-100,-100,500);
     set_servo_position(LEFT_CLAW, LEFT_CLAW_OPEN);
     set_servo_position(RIGHT_CLAW, RIGHT_CLAW_OPEN);//drops off pipe
     msleep(500);
-    move_distance(100,100,300);//pushes pipe a little
-    move_distance(-100,-100,3000);//moves away
+    temp_func//temp
+    move_distance(100,100,600);//pushes pipe a little
+    temp_func//temp
+    move_distance(-100,-100,2800);//moves away
     msleep(500);
+    temp_func//temp
     set_servo_position(LEFT_CLAW, LEFT_CLAW_CLOSE);
     set_servo_position(RIGHT_CLAW, RIGHT_CLAW_CLOSE);//closes claws
     msleep(500);
-    move_distance(0,-100,2000);
-    move_distance(-100,0,1100);
+    temp_func//temp
+    move_distance(0,-100,2100);
+    temp_func//temp
+    move_distance(-100,0,1200);
+    temp_func//temp
     go_to_line(-50,-50);
+    temp_func//temp
     move_distance(-100,-100,1500);
     msleep(500);
+    temp_func//temp
     move_distance(-100,0,2000);
 	msleep(500);
-    move_distance(-100,-100,1300);
+    temp_func//temp
+    move_distance(-100,-100,2500);
     msleep(500);
-    move_distance(-100,0,1200);
-    
+    temp_func//temp
+    move_distance(-100,-100,1000);   
+    go_to_line(50,50);
+    move_distance(-100,-100,1250);
+    msleep(500);
+    temp_func//temp
+    set_servo_position(RIGHT_CLAW, RIGHT_CLAW_OPEN);
+    msleep(500);
+    temp_func//temp
+    set_servo_position(LEFT_CLAW, 1667);
+    msleep(500);
+    temp_func//temp
+    move_distance(-100,0,1000);
+    msleep(500);
+    temp_func//temp
+    move_distance(-500,0,1000);
+    temp_func//temp
+    move_distance(-70,-70,3000);
+    msleep(500);
+    //temp_func//temp
+    //set_servo_position(LEFT_CLAW, LEFT_CLAW_OPEN);
+    //msleep(500);
+    //temp_func//temp
+    //move_distance(-500,-500,1000);
+    temp_func//temp
+    msleep(500);
+    set_servo_position(LEFT_CLAW, LEFT_CLAW_CLOSE);
+    set_servo_position(RIGHT_CLAW, RIGHT_CLAW_CLOSE);
+    msleep(500);
+    temp_func//temp
+    move_distance(-100,-100,1000);
+    move_distance(0,100,100);
+    move_distance(-150,-50,2000);
+    move_distance(-100,-100,2200);
+    //purposefully approach ramp diaganolly
     
     //line follower code:
     //move_left(-100);//turns to face new black line in order to follow it
