@@ -12,7 +12,8 @@
 
 
 //RANGE CONSTANT FOR GO TO LINE
-#define kR 0.282
+#define kRDef 0.3
+#define kRBack 0.07
 
 
 //CONSTANT MODIFYING DISTANCES ON ROOMBA
@@ -38,11 +39,11 @@ double whiteValueR = 0.0;
 
 
 //LEFT LINE SENSOR PORT NUMBER
-#define LEFT_LINE_SENSOR 1
+#define LEFT_LINE_SENSOR 0
 
 
 //RIGHT LINE SENSOR PORT NUMBER
-#define RIGHT_LINE_SENSOR 0
+#define RIGHT_LINE_SENSOR 1
 
 
 //LEFT CLAW PORT NUMBER
@@ -183,7 +184,53 @@ void move_distance(double left_speed, double right_speed, double distance) {
   #endif
 };
 
-void go_to_line(double left_speed, double right_speed) {
+void go_to_line1(double left_speed, double right_speed, double kR, unsigned int portSensor) {
+  move(left_speed,right_speed);
+  double speed = sqrt(left_speed*left_speed+right_speed*right_speed);
+  float t = 0.0;
+  clock_t cClock = clock();
+
+  //average calculation
+  double whiteValue = 0.0;
+  #define go_to_line_whiteValueCalcTime 0.04
+  while(t <= go_to_line_whiteValueCalcTime) {
+    double dt = ((double)(clock() - cClock)) / CLOCKS_PER_SEC;
+    cClock = clock();
+    double mL = analog(portSensor);
+    whiteValue += mL * dt;
+    t += dt;
+  };
+  whiteValue /= t;
+
+  //standard deviation calculation
+  double stDev = 0.0;
+  t = 0.0;
+  cClock = clock();
+  #define go_to_line_stDevCalcTime 0.04
+  while(t <= go_to_line_stDevCalcTime) {
+    double dt = ((double)(clock() - cClock)) / CLOCKS_PER_SEC;
+    cClock = clock();
+    double sqNum = (analog(portSensor)-whiteValue);
+    stDev += dt*sqNum*sqNum;
+    t += dt;
+  };
+  stDev /= t;
+
+  //go to line
+  t = 0.0;
+  float integralError = 0.0;//this should be the integral of error dt
+  cClock = clock();
+  while(dabs(integralError) <= kR*stDev) {
+    double dt = ((double)(clock() - cClock)) / CLOCKS_PER_SEC;
+    cClock = clock();
+    double val = analog(portSensor);
+    t += dt;
+    integralError += (val - whiteValue)*dt*speed;
+    integralError *= exp(-dt*speed);
+  };
+};
+
+void go_to_line(double left_speed, double right_speed, double kR) {
   move(left_speed,right_speed);
   double speed = sqrt(left_speed*left_speed+right_speed*right_speed);
   float t = 0.0;
@@ -297,7 +344,7 @@ void code() {
     set_servo_position(RIGHT_CLAW, RIGHT_CLAW_OPEN);//opens claws to later grab pvc ring
     msleep(1000);//gives motors time to open
     
-    go_to_line(50,50);//goes to black line to calibrate y axis
+    go_to_line(50,50,kRDef);//goes to black line to calibrate y axis
     temp_func//temp
     move_distance(-50,-50,1300);//moves backwards
     temp_func//temp
@@ -305,7 +352,7 @@ void code() {
     temp_func//temp
     move_distance(-50,-50,900);//moves backwards as a saftey net
    temp_func//temp
-    go_to_line(80,80);//goes to black line to calibrate position towards pvc ring
+    go_to_line(80,80,kRDef);//goes to black line to calibrate position towards pvc ring
     temp_func//temp
     printf("go_to_line 1 finished.\n");
     move_distance(100,100,3100);//moves to pvc ring
@@ -315,7 +362,7 @@ void code() {
     temp_func//temp
     move_distance(-50,-50,1700);
     temp_func//temp
-    go_to_line(-50,-50);//goes back to line to calibrate position backwards
+    go_to_line(-50,-50,kRBack);//goes back to line to calibrate position backwards
     temp_func//temp
     printf("go_to_line 2 finished.\n");
     move_distance(-100,-100,1500);//goes backwards to turning location
@@ -327,10 +374,10 @@ void code() {
     temp_func//temp
     move_distance(100,100,5000);//moves
     temp_func//temp
-    move_distance(0,80,1700);//turns around blocks
+    move_distance(0,80,1900);//turns around blocks
     msleep(500);
     temp_func//temp
-    move_distance(100,100,1600);//moves to placement location
+    move_distance(100,100,1400);//moves to placement location
     msleep(500);
     move_distance(-100,-100,500);
     set_servo_position(LEFT_CLAW, LEFT_CLAW_OPEN);
@@ -339,73 +386,57 @@ void code() {
     temp_func//temp
     move_distance(100,100,600);//pushes pipe a little
     temp_func//temp
-    move_distance(-100,-100,2800);//moves away
+    move_distance(-100,-100,2500);//moves away
     msleep(500);
     temp_func//temp
     set_servo_position(LEFT_CLAW, LEFT_CLAW_CLOSE);
     set_servo_position(RIGHT_CLAW, RIGHT_CLAW_CLOSE);//closes claws
     msleep(500);
     temp_func//temp
-    move_distance(0,-100,2100);
+    move_distance(0,-100,2500);//does wierd turn thing
     temp_func//temp
-    move_distance(-100,0,1200);
+    move_distance(-100,0,1200);//does wierd turn thing
+    move_distance(100,100,500);//moves forwards in case it's in front of line
     temp_func//temp
-    go_to_line(-50,-50);
+    go_to_line1(-30,-30,0.4,LEFT_LINE_SENSOR);//moves backwards to line
     temp_func//temp
-    move_distance(-100,-100,1500);
+    move_distance(-100,-100,1500);//moves backwards to turn onto the ramp
     msleep(500);
     temp_func//temp
-    move_distance(-100,0,2000);
+    move_distance(-100,0,2500);//turns to be aligned sideways with the ramp
 	msleep(500);
     temp_func//temp
-    move_distance(-100,-100,2500);
+    move_distance(-100,-100,3500);//moves backwards in case it's ahead of line
     msleep(500);
-    temp_func//temp
-    move_distance(-100,-100,1000);   
-    go_to_line(50,50);
-    move_distance(-100,-100,1250);
+    temp_func//temp  
+    go_to_line(30,30,kRDef);//moves to line to align correctly
+    move_distance(-100,-100,1350);//moves towards ramp
     msleep(500);
     temp_func//temp
     set_servo_position(RIGHT_CLAW, RIGHT_CLAW_OPEN);
     msleep(500);
     temp_func//temp
-    set_servo_position(LEFT_CLAW, 1667);
+    set_servo_position(LEFT_CLAW, 1667);//closes claws so it can turn
     msleep(500);
     temp_func//temp
-    move_distance(-100,0,1000);
+    move_distance(-100,0,750);//turns to go up ramp
     msleep(500);
     temp_func//temp
-    move_distance(-500,0,1000);
+    move_distance(-500,0,1000);//pushes up ramp bump
     temp_func//temp
-    move_distance(-70,-70,3000);
+    move_distance(-75,-75,3000);//goes up ramp a little
     msleep(500);
-    //temp_func//temp
-    //set_servo_position(LEFT_CLAW, LEFT_CLAW_OPEN);
-    //msleep(500);
-    //temp_func//temp
-    //move_distance(-500,-500,1000);
     temp_func//temp
     msleep(500);
     set_servo_position(LEFT_CLAW, LEFT_CLAW_CLOSE);
-    set_servo_position(RIGHT_CLAW, RIGHT_CLAW_CLOSE);
+    set_servo_position(RIGHT_CLAW, RIGHT_CLAW_CLOSE);//closes claws
     msleep(500);
     temp_func//temp
-    move_distance(-100,-100,1000);
-    move_distance(0,100,100);
-    move_distance(-150,-50,2000);
-    move_distance(-100,-100,2200);
-    //purposefully approach ramp diaganolly
-    
-    //line follower code:
-    //move_left(-100);//turns to face new black line in order to follow it
-    //msleep(1200);
-    //stop_moving_left();
-    //printf("Part 1 finished.\n");
-    //move_distance(100,100,270);//moves past line in front of desired line
-    //go_to_line(30,30);//moves towards desired line in order to follow it
-    //printf("go to line 3 finished \n");
-    //move_distance(20,20,70);
-    //follow_line(60,10);
+    move_distance(-100,-100,1000);//moves up ramp
+    move_distance(0,100,100);//turns to go up ramp at better angle
+    move_distance(-100,-100,7500);//goes up rest of ramp
+    temp_func//temp
+    move_distance(0,100,2000);//turns towards platform
     
 };
 
