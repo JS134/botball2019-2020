@@ -12,7 +12,7 @@
 
 
 //RANGE CONSTANT FOR GO TO LINE
-#define kRDef 0.3
+#define kRDef 0.31
 #define kRBack 0.07
 
 
