@@ -12,7 +12,7 @@
 
 
 //RANGE CONSTANT FOR GO TO LINE
-#define kRDef 0.31
+#define kRDef 0.32
 #define kRBack 0.07
 
 
@@ -346,7 +346,7 @@ void code() {
     
     go_to_line(50,50,kRDef);//goes to black line to calibrate y axis
     temp_func//temp
-    move_distance(-50,-50,1300);//moves backwards
+    move_distance(-50,-50,1500);//moves backwards
     temp_func//temp
     move_distance(50,0,2150);//turns to face towards pvc ring
     temp_func//temp
@@ -355,26 +355,26 @@ void code() {
     go_to_line(80,80,kRDef);//goes to black line to calibrate position towards pvc ring
     temp_func//temp
     printf("go_to_line 1 finished.\n");
-    move_distance(100,100,3100);//moves to pvc ring
+    move_distance(100,100,3200);//moves to pvc ring
     set_servo_position(LEFT_CLAW, LEFT_CLAW_CLOSE);
     set_servo_position(RIGHT_CLAW, RIGHT_CLAW_CLOSE);//closes claws to grab pvc ring
-    msleep(1000);//gives motors time to close
+    msleep(1000);//gives servos time to close
     temp_func//temp
     move_distance(-50,-50,1700);
     temp_func//temp
-    go_to_line(-50,-50,kRBack);//goes back to line to calibrate position backwards
+    go_to_line(-30,-30,kRBack);//goes back to line to calibrate position backwards
     temp_func//temp
     printf("go_to_line 2 finished.\n");
     move_distance(-100,-100,1500);//goes backwards to turning location
     temp_func//temp
     
     //move_distance code:
-    move_distance(-100,0,1700);//turns to avoid blocks
+    move_distance(-100,0,1600);//turns to avoid blocks
     msleep(500);
     temp_func//temp
     move_distance(100,100,5000);//moves
     temp_func//temp
-    move_distance(0,80,1900);//turns around blocks
+    move_distance(0,80,1600);//turns around blocks
     msleep(500);
     temp_func//temp
     move_distance(100,100,1400);//moves to placement location
@@ -386,57 +386,60 @@ void code() {
     temp_func//temp
     move_distance(100,100,600);//pushes pipe a little
     temp_func//temp
-    move_distance(-100,-100,2500);//moves away
+    move_distance(-50,-50,2500);//moves away
     msleep(500);
     temp_func//temp
     set_servo_position(LEFT_CLAW, LEFT_CLAW_CLOSE);
     set_servo_position(RIGHT_CLAW, RIGHT_CLAW_CLOSE);//closes claws
     msleep(500);
     temp_func//temp
-    move_distance(0,-100,2500);//does wierd turn thing
+    move_distance(0,-100,2100);//does wierd turn thing
     temp_func//temp
     move_distance(-100,0,1200);//does wierd turn thing
     move_distance(100,100,500);//moves forwards in case it's in front of line
     temp_func//temp
     go_to_line1(-30,-30,0.4,LEFT_LINE_SENSOR);//moves backwards to line
     temp_func//temp
-    move_distance(-100,-100,1500);//moves backwards to turn onto the ramp
+    move_distance(-150,-150,1500);//moves backwards to turn onto the ramp
     msleep(500);
     temp_func//temp
-    move_distance(-100,0,2500);//turns to be aligned sideways with the ramp
+    move_distance(-100,0,2300);//turns to be aligned sideways with the ramp
 	msleep(500);
     temp_func//temp
     move_distance(-100,-100,3500);//moves backwards in case it's ahead of line
     msleep(500);
     temp_func//temp  
-    go_to_line(30,30,kRDef);//moves to line to align correctly
-    move_distance(-100,-100,1350);//moves towards ramp
+    go_to_line(30,30,0.31);//moves to line to align correctly
+    move_distance(-100,-100,1500);//moves towards ramp
     msleep(500);
     temp_func//temp
     set_servo_position(RIGHT_CLAW, RIGHT_CLAW_OPEN);
     msleep(500);
-    temp_func//temp
     set_servo_position(LEFT_CLAW, 1667);//closes claws so it can turn
     msleep(500);
     temp_func//temp
-    move_distance(-100,0,750);//turns to go up ramp
+    move_distance(-500,0,1500);//turns to go up ramp
+    msleep(1000);
+    temp_func//temp
+    temp_func//temp
+    move_distance(-75,-75,4000);//goes up ramp a little
     msleep(500);
     temp_func//temp
-    move_distance(-500,0,1000);//pushes up ramp bump
-    temp_func//temp
-    move_distance(-75,-75,3000);//goes up ramp a little
-    msleep(500);
-    temp_func//temp
-    msleep(500);
     set_servo_position(LEFT_CLAW, LEFT_CLAW_CLOSE);
     set_servo_position(RIGHT_CLAW, RIGHT_CLAW_CLOSE);//closes claws
     msleep(500);
     temp_func//temp
-    move_distance(-100,-100,1000);//moves up ramp
-    move_distance(0,100,100);//turns to go up ramp at better angle
-    move_distance(-100,-100,7500);//goes up rest of ramp
+    //move_distance(-100,0,100);//turns to avoid hitting wall
+    move_distance(-100,-100,8500);//moves up ramp
     temp_func//temp
-    move_distance(0,100,2000);//turns towards platform
+    set_servo_position(RIGHT_CLAW, RIGHT_CLAW_OPEN);
+    msleep(500);
+    set_servo_position(LEFT_CLAW, 1667);//moves claws so it won't hit the pipe
+    move_distance(0,100,500);//turns towards platform
+    move_distance(-100,-100,500);//turns towards platform
+    move_distance(0,100,500);//turns towards platform
+    move_distance(-100,-100,250);//turns towards platform
+    move_distance(-100,0,50);//turns towards platform
     
 };
 
